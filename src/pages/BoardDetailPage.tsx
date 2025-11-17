@@ -9,7 +9,7 @@ import {
     useSensor,
     useSensors,
     DragOverlay,
-    pointerWithin
+    closestCorners
 } from '@dnd-kit/core';
 import type {
     DragStartEvent,
@@ -310,7 +310,7 @@ export function BoardDetailPage() {
             sensors={sensors}
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
-            collisionDetection={pointerWithin}
+            collisionDetection={closestCorners}
         >
             <div className="flex flex-col h-screen bg-background text-foreground p-4">
 
