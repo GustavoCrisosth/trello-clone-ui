@@ -1,73 +1,79 @@
-# React + TypeScript + Vite
+Interface TaskFlow (Clone do Trello/Asana)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Este é o repositório do front-end para a aplicação de gestão de projetos TaskFlow. Esta interface foi construída do zero com React, TypeScript e Vite, utilizando TailwindCSS e shadcn/ui para uma UI moderna, responsiva e com tema escuro (dark mode).
 
-Currently, two official plugins are available:
+Este projeto consome a API do Back-end (Node.js) que foi hospedada separadamente.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+ Links do Projeto
 
-## React Compiler
+Aplicação no Ar (Vercel): [https://trello-clone-ui-one.vercel.app/]
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Aviso Importante: O back-end está hospedado no plano gratuito do Render. A primeira inicialização (ao registrar-se ou fazer login) pode demorar 30-60 segundos para "acordar" o servidor. Após isso, o uso é instantâneo.
 
-## Expanding the ESLint configuration
+Stack de Tecnologias
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+Core: React, TypeScript, Vite
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+Estilização: TailwindCSS, shadcn/ui (Componentes UI)
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+Gerenciamento de Estado: Zustand (para o token de autenticação)
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+Formulários: React Hook Form & Zod (para validação)
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Requisições API: Axios (com interceptors para o token JWT)
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+Drag-and-Drop: dnd-kit (para o Kanban)
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+Hospedagem: Vercel
+
+
+ Principais Funcionalidades
+
+Autenticação de Usuário: Páginas de Login e Registro que se comunicam com a API e armazenam o JWT de forma segura no localStorage (via Zustand).
+
+Rotas Protegidas: O usuário não pode acessar os quadros (/boards) sem estar logado.
+
+Dashboard de Quadros: Busca e exibe todos os quadros do usuário, permitindo criar, editar (in-place) e deletar quadros (com modal de confirmação).
+
+Visualização Kanban Completa:
+
+Renderiza listas e cartões vindos da API.
+
+Drag-and-Drop: Funcionalidade completa para arrastar e soltar cartões entre listas ou reordená-los, com atualização otimista na UI e chamada de API para persistir a mudança.
+
+Edição "In-place": Permite editar títulos de listas e quadros clicando diretamente neles.
+
+CRUD de Cartões: Modal para criar cartões e editar seus detalhes (título e descrição).
+
+CRUD de Listas: Modal para criar novas listas (colunas).
+
+Tema Escuro (Dark Mode): Um seletor de tema (Claro, Escuro, Sistema) que persiste a escolha do usuário.
+
+Design Responsivo (Básico): A interface é funcional e minimalista.
+
+Local Setup (Como Rodar Localmente)
+
+Clone este repositório:
+
+Bash
+
+git clone https://github.com/seu-usuario/trello-clone-ui.git
+cd trello-clone-ui
+Instale as dependências:
+
+Bash
+
+npm install
+Crie um arquivo .env.local na raiz para apontar para a sua API local (o back-end):
+
+Snippet de código
+
+VITE_API_URL=http://localhost:3001/api
+(Certifique-se de que o projeto trello-clone-api esteja rodando localmente na porta 3001)
+
+Inicie o servidor de desenvolvimento do Vite:
+
+Bash
+
+npm run dev
+O site estará disponível em http://localhost:5173.
