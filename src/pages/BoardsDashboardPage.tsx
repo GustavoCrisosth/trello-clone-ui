@@ -98,10 +98,10 @@ export function BoardsDashboardPage() {
     }
 
     return (
-        <div className="min-h-screen p-8 bg-gradient-to-b from-white to-gray-100 dark:from-gray-900 dark:to-black text-foreground">
+        <div className="min-h-screen p-4 md:p-8 bg-gradient-to-b from-white to-gray-100 dark:from-gray-900 dark:to-black text-foreground">
 
             { }
-            <header className="flex justify-between items-center mb-10">
+            <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
                 { }
                 <h1 className="text-2xl font-semibold text-foreground">
                     Olá, <span className="font-bold">{user?.email || 'Usuário'}</span>
@@ -117,7 +117,7 @@ export function BoardsDashboardPage() {
             { }
             <main>
                 { }
-                <div className="flex justify-between items-center mb-6">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
                     <h2 className="text-3xl font-bold">Seus Quadros</h2>
 
                     <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>

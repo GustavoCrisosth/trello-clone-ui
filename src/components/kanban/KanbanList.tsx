@@ -40,7 +40,7 @@ export function KanbanList({ list, renderAddCardButton, onDelete, onDeleteCard, 
     return (
         <div
             ref={setNodeRef}
-            className="w-72 bg-muted text-muted-foreground rounded-lg p-3 shadow-md flex-shrink-0 flex flex-col"
+            className="w-full md:w-72 bg-muted text-muted-foreground rounded-lg p-3 shadow-md md:flex-shrink-0 flex flex-col"
         >
             <div className="flex justify-between items-center mb-3">
                 <EditableTitle

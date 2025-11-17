@@ -323,7 +323,7 @@ export function BoardDetailPage() {
                     <h1 className="text-3xl font-bold">{board.title}</h1>
                 </header>
 
-                <main className="flex-1 flex gap-4 overflow-x-auto">
+                <main className="flex-1 flex flex-col md:flex-row gap-4 overflow-y-auto md:overflow-x-auto">
                     {board.lists.map((list) => (
                         <KanbanList
                             key={list.id}
@@ -355,7 +355,7 @@ export function BoardDetailPage() {
 
                     <Dialog open={isListModalOpen} onOpenChange={setIsListModalOpen}>
                         <DialogTrigger asChild>
-                            <button className="w-72 bg-muted/50 hover:bg-muted p-3 rounded-lg text-left font-medium flex-shrink-0">
+                            <button className="w-full md:w-72 bg-muted/50 hover:bg-muted p-3 rounded-lg text-left font-medium md:flex-shrink-0">
                                 + Adicionar outra lista
                             </button>
                         </DialogTrigger>
@@ -395,7 +395,7 @@ export function BoardDetailPage() {
                 {createPortal(
                     <DragOverlay>
                         {activeCard ? (
-                            <div className="bg-card p-3 rounded-md shadow w-72">
+                            <div className="bg-card p-3 rounded-md shadow w-[90vw] md:w-72">
                                 {activeCard.title}
                             </div>
                         ) : null}
