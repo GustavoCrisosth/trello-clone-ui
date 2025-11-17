@@ -13,6 +13,7 @@ import {
 } from '@dnd-kit/core';
 import type {
     DragStartEvent,
+    DragOverEvent,
     DragEndEvent
 } from '@dnd-kit/core';
 import { arrayMove } from '@dnd-kit/sortable';
@@ -188,8 +189,61 @@ export function BoardDetailPage() {
         return undefined;
     }
 
+    function getTargetList(overId: string | number): List | undefined {
+        let targetList = findList(overId);
+        if (targetList) {
+            return targetList;
+        }
+
+        const overCard = findCard(overId);
+        if (overCard) {
+            targetList = findList(overCard.listId);
+            return targetList;
+        }
+
+        return undefined;
+    }
+
     function handleDragStart(event: DragStartEvent) {
         setActiveCardId(event.active.id as number);
+    }
+
+    function handleDragOver(event: DragOverEvent) {
+        const { over } = event;
+        if (!over || !activeCardId) return;
+
+        const originalCard = findCard(activeCardId);
+        if (!originalCard) return;
+
+        const originalList = findList(originalCard.listId);
+        const targetList = getTargetList(over.id);
+
+        if (!originalList || !targetList || originalList.id === targetList.id) {
+            return;
+        }
+
+        setBoard((currentBoard) => {
+            if (!currentBoard) return null;
+
+            const newLists = JSON.parse(JSON.stringify(currentBoard.lists));
+
+            const originalListIndex = newLists.findIndex((l: List) => l.id === originalList.id);
+            const targetListIndex = newLists.findIndex((l: List) => l.id === targetList.id);
+            const originalCardIndex = newLists[originalListIndex].cards.findIndex((c: Card) => c.id === activeCardId);
+            if (originalCardIndex === -1) return currentBoard;
+
+            const overCard = findCard(over.id);
+            const overCardIndex = overCard
+                ? newLists[targetListIndex].cards.findIndex((c: Card) => c.id === over.id)
+                : newLists[targetListIndex].cards.length;
+
+            const [movedCard] = newLists[originalListIndex].cards.splice(originalCardIndex, 1);
+            movedCard.listId = targetList.id;
+
+            newLists[targetListIndex].cards.splice(overCardIndex, 0, movedCard);
+
+            return { ...currentBoard, lists: newLists };
+        });
     }
 
     function handleDragEnd(event: DragEndEvent) {
@@ -207,22 +261,14 @@ export function BoardDetailPage() {
         }
 
         const originalList = findList(originalCard.listId);
-        const targetList = findList(over.id) || findList(over.data.current?.sortable.containerId);
+        const targetList = getTargetList(over.id);
 
         if (!originalList || !targetList) {
             setActiveCardId(null);
             return;
         }
 
-        let targetCardIndex: number;
-        if (over.id === targetList.id) {
-            targetCardIndex = targetList.cards.length;
-        } else {
-            targetCardIndex = targetList.cards.findIndex((c: Card) => c.id === over.id);
-        }
-        if (targetCardIndex === -1) {
-            targetCardIndex = 0;
-        }
+        let finalApiOrder = 0;
 
         setBoard((currentBoard) => {
             if (!currentBoard) return null;
@@ -234,6 +280,15 @@ export function BoardDetailPage() {
 
             if (originalListIndex === -1 || targetListIndex === -1 || originalCardIndex === -1) {
                 return currentBoard;
+            }
+
+            const overCard = findCard(over.id);
+            let targetCardIndex = overCard
+                ? allLists[targetListIndex].cards.findIndex((c: Card) => c.id === over.id)
+                : allLists[targetListIndex].cards.length;
+
+            if (targetCardIndex === -1) {
+                targetCardIndex = 0;
             }
 
             if (originalList.id === targetList.id) {
@@ -250,6 +305,9 @@ export function BoardDetailPage() {
                     card.order = index + 1;
                 });
 
+                const finalCardIndex = allLists[originalListIndex].cards.findIndex((c: Card) => c.id === activeCardId);
+                finalApiOrder = finalCardIndex + 1;
+
             } else {
                 const [movedCard] = allLists[originalListIndex].cards.splice(originalCardIndex, 1);
                 movedCard.listId = targetList.id;
@@ -262,20 +320,23 @@ export function BoardDetailPage() {
                 allLists[targetListIndex].cards.forEach((card: Card, index: number) => {
                     card.order = index + 1;
                 });
+
+                const finalCardIndex = allLists[targetListIndex].cards.findIndex((c: Card) => c.id === activeCardId);
+                finalApiOrder = finalCardIndex + 1;
             }
 
             return { ...currentBoard, lists: allLists };
         });
 
-        const finalApiOrder = targetCardIndex + 1;
-
-        api.patch(`/cards/${originalCard.id}/move`, {
-            newListId: targetList.id,
-            newOrder: finalApiOrder,
-        }).catch((err) => {
-            console.error("Falha ao salvar a mudança!", err);
-            setError("Não foi possível salvar a mudança. Recarregue a página.");
-        });
+        if (finalApiOrder > 0) {
+            api.patch(`/cards/${originalCard.id}/move`, {
+                newListId: targetList.id,
+                newOrder: finalApiOrder,
+            }).catch((err) => {
+                console.error("Falha ao salvar a mudança!", err);
+                setError("Não foi possível salvar a mudança. Recarregue a página.");
+            });
+        }
 
         setActiveCardId(null);
     }
@@ -294,13 +355,12 @@ export function BoardDetailPage() {
         <DndContext
             sensors={sensors}
             onDragStart={handleDragStart}
+            onDragOver={handleDragOver}
             onDragEnd={handleDragEnd}
             collisionDetection={closestCenter}
         >
-            { }
-            <div className="flex flex-col h-screen p-4 text-foreground bg-gradient-to-br from-white via-gray-100 to-gray-200 dark:from-gray-900 dark:via-gray-900 dark:to-black">
+            <div className="flex flex-col h-screen bg-background text-foreground p-4">
 
-                { }
                 <header className="mb-4 flex items-center gap-4">
                     <Button asChild variant="outline" size="icon">
                         <Link to="/boards">
@@ -322,7 +382,7 @@ export function BoardDetailPage() {
                             renderAddCardButton={() => (
                                 <Dialog>
                                     <DialogTrigger asChild>
-                                        <button className="mt-4 w-full text-left text-sm text-gray-600 hover:bg-gray-300 p-2 rounded-md">
+                                        <button className="mt-4 w-full text-left text-sm text-muted-foreground hover:bg-accent p-2 rounded-md">
                                             + Adicionar um cartão
                                         </button>
                                     </DialogTrigger>
@@ -342,7 +402,6 @@ export function BoardDetailPage() {
 
                     <Dialog open={isListModalOpen} onOpenChange={setIsListModalOpen}>
                         <DialogTrigger asChild>
-                            { }
                             <button className="w-72 bg-muted/50 hover:bg-muted p-3 rounded-lg text-left font-medium flex-shrink-0">
                                 + Adicionar outra lista
                             </button>
@@ -359,7 +418,6 @@ export function BoardDetailPage() {
                     </Dialog>
                 </main>
 
-                { }
                 <Dialog open={!!editingCard} onOpenChange={(isOpen) => !isOpen && setEditingCard(null)}>
                     <DialogContent>
                         <DialogHeader>
@@ -384,7 +442,7 @@ export function BoardDetailPage() {
                 {createPortal(
                     <DragOverlay>
                         {activeCard ? (
-                            <div className="bg-white p-3 rounded-md shadow w-72">
+                            <div className="bg-card p-3 rounded-md shadow w-72">
                                 {activeCard.title}
                             </div>
                         ) : null}
