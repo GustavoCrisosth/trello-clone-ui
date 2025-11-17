@@ -9,11 +9,10 @@ import {
     useSensor,
     useSensors,
     DragOverlay,
-    closestCenter
+    pointerWithin
 } from '@dnd-kit/core';
 import type {
     DragStartEvent,
-    DragOverEvent,
     DragEndEvent
 } from '@dnd-kit/core';
 import { arrayMove } from '@dnd-kit/sortable';
@@ -208,44 +207,6 @@ export function BoardDetailPage() {
         setActiveCardId(event.active.id as number);
     }
 
-    function handleDragOver(event: DragOverEvent) {
-        const { over } = event;
-        if (!over || !activeCardId) return;
-
-        const originalCard = findCard(activeCardId);
-        if (!originalCard) return;
-
-        const originalList = findList(originalCard.listId);
-        const targetList = getTargetList(over.id);
-
-        if (!originalList || !targetList || originalList.id === targetList.id) {
-            return;
-        }
-
-        setBoard((currentBoard) => {
-            if (!currentBoard) return null;
-
-            const newLists = JSON.parse(JSON.stringify(currentBoard.lists));
-
-            const originalListIndex = newLists.findIndex((l: List) => l.id === originalList.id);
-            const targetListIndex = newLists.findIndex((l: List) => l.id === targetList.id);
-            const originalCardIndex = newLists[originalListIndex].cards.findIndex((c: Card) => c.id === activeCardId);
-            if (originalCardIndex === -1) return currentBoard;
-
-            const overCard = findCard(over.id);
-            const overCardIndex = overCard
-                ? newLists[targetListIndex].cards.findIndex((c: Card) => c.id === over.id)
-                : newLists[targetListIndex].cards.length;
-
-            const [movedCard] = newLists[originalListIndex].cards.splice(originalCardIndex, 1);
-            movedCard.listId = targetList.id;
-
-            newLists[targetListIndex].cards.splice(overCardIndex, 0, movedCard);
-
-            return { ...currentBoard, lists: newLists };
-        });
-    }
-
     function handleDragEnd(event: DragEndEvent) {
         const { over } = event;
 
@@ -268,7 +229,15 @@ export function BoardDetailPage() {
             return;
         }
 
-        let finalApiOrder = 0;
+        let targetCardIndex: number;
+        if (over.id === targetList.id) {
+            targetCardIndex = targetList.cards.length;
+        } else {
+            targetCardIndex = targetList.cards.findIndex((c: Card) => c.id === over.id);
+        }
+        if (targetCardIndex === -1) {
+            targetCardIndex = 0;
+        }
 
         setBoard((currentBoard) => {
             if (!currentBoard) return null;
@@ -280,15 +249,6 @@ export function BoardDetailPage() {
 
             if (originalListIndex === -1 || targetListIndex === -1 || originalCardIndex === -1) {
                 return currentBoard;
-            }
-
-            const overCard = findCard(over.id);
-            let targetCardIndex = overCard
-                ? allLists[targetListIndex].cards.findIndex((c: Card) => c.id === over.id)
-                : allLists[targetListIndex].cards.length;
-
-            if (targetCardIndex === -1) {
-                targetCardIndex = 0;
             }
 
             if (originalList.id === targetList.id) {
@@ -305,9 +265,6 @@ export function BoardDetailPage() {
                     card.order = index + 1;
                 });
 
-                const finalCardIndex = allLists[originalListIndex].cards.findIndex((c: Card) => c.id === activeCardId);
-                finalApiOrder = finalCardIndex + 1;
-
             } else {
                 const [movedCard] = allLists[originalListIndex].cards.splice(originalCardIndex, 1);
                 movedCard.listId = targetList.id;
@@ -320,23 +277,20 @@ export function BoardDetailPage() {
                 allLists[targetListIndex].cards.forEach((card: Card, index: number) => {
                     card.order = index + 1;
                 });
-
-                const finalCardIndex = allLists[targetListIndex].cards.findIndex((c: Card) => c.id === activeCardId);
-                finalApiOrder = finalCardIndex + 1;
             }
 
             return { ...currentBoard, lists: allLists };
         });
 
-        if (finalApiOrder > 0) {
-            api.patch(`/cards/${originalCard.id}/move`, {
-                newListId: targetList.id,
-                newOrder: finalApiOrder,
-            }).catch((err) => {
-                console.error("Falha ao salvar a mudança!", err);
-                setError("Não foi possível salvar a mudança. Recarregue a página.");
-            });
-        }
+        const finalApiOrder = targetCardIndex + 1;
+
+        api.patch(`/cards/${originalCard.id}/move`, {
+            newListId: targetList.id,
+            newOrder: finalApiOrder,
+        }).catch((err) => {
+            console.error("Falha ao salvar a mudança!", err);
+            setError("Não foi possível salvar a mudança. Recarregue a página.");
+        });
 
         setActiveCardId(null);
     }
@@ -355,9 +309,8 @@ export function BoardDetailPage() {
         <DndContext
             sensors={sensors}
             onDragStart={handleDragStart}
-            onDragOver={handleDragOver}
             onDragEnd={handleDragEnd}
-            collisionDetection={closestCenter}
+            collisionDetection={pointerWithin}
         >
             <div className="flex flex-col h-screen bg-background text-foreground p-4">
 
