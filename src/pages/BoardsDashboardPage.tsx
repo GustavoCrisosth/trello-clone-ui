@@ -25,6 +25,7 @@ import { Button, buttonVariants } from '@/components/ui/button';
 import { NewBoardForm } from '@/components/forms/NewBoardForm';
 import { ModeToggle } from '@/components/mode-toggle';
 import { EditableTitle } from '@/components/ui/editable-title';
+import { toast } from "sonner";
 
 interface Board {
     id: number;
@@ -63,12 +64,12 @@ export function BoardsDashboardPage() {
             setBoards((currentBoards) =>
                 currentBoards.filter((board) => board.id !== boardId)
             );
-
+            toast.success("Quadro deletado.")
             await api.delete(`/boards/${boardId}`);
 
         } catch (err) {
             console.error("Erro ao deletar o quadro:", err);
-            setError("Falha ao deletar o quadro. Por favor, recarregue a página.");
+            toast.error("Ocorreu um erro. Tente novamente.");
         }
     }
 
@@ -95,6 +96,7 @@ export function BoardsDashboardPage() {
     function onBoardCreated(newBoard: unknown) {
         setBoards((currentBoards) => [...currentBoards, newBoard as Board]);
         setIsModalOpen(false);
+        toast.success("Quadro criado com sucesso!")
     }
 
     return (

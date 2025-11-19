@@ -31,6 +31,7 @@ import { NewCardForm } from '@/components/forms/NewCardForm';
 import { KanbanList } from '@/components/kanban/KanbanList';
 import { EditCardForm } from '@/components/forms/EditCardForm';
 import { Skeleton } from '@/components/ui/skeleton';
+import { toast } from "sonner"
 
 interface Card { id: number; title: string; order: number; listId: number; description?: string | null; }
 interface List { id: number; title: string; order: number; cards: Card[]; }
@@ -88,6 +89,7 @@ export function BoardDetailPage() {
             return { ...currentBoard, lists: [...currentBoard.lists, newListWithCards] };
         });
         setIsListModalOpen(false);
+        toast.success("Lista criada com sucesso!");
     }
 
     function onCardCreated(newListId: number, newCard: unknown) {
@@ -102,6 +104,7 @@ export function BoardDetailPage() {
             });
             return { ...currentBoard, lists: updatedLists };
         });
+        toast.success("Cartão adicionado!");
     }
 
     function handleCardUpdated(updatedCard: Card) {
@@ -131,10 +134,11 @@ export function BoardDetailPage() {
                     lists: currentBoard.lists.filter((list) => list.id !== listId)
                 };
             });
+            toast.success("Lista deletada.");
             await api.delete(`/lists/${listId}`);
         } catch (err) {
             console.error("Erro ao deletar a lista:", err);
-            setError("Falha ao deletar a lista. Recarregue a página.");
+            toast.error("Ocorreu um erro. Tente novamente.");
         }
     }
 
@@ -148,10 +152,11 @@ export function BoardDetailPage() {
                 }));
                 return { ...currentBoard, lists: newLists };
             });
+            toast.success("Cartão removido.");
             await api.delete(`/cards/${cardId}`);
         } catch (err) {
             console.error("Erro ao deletar o cartão:", err);
-            setError("Falha ao deletar o cartão. Recarregue a página.");
+            toast.error("Ocorreu um erro. Tente novamente.");
         }
     }
 
